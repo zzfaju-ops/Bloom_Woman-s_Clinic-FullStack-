@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="color:var(--pink-dark);">Cycle &amp; Symptom Tracker</h1>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Log an entry</h3>
+    <form method="POST">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" name="log_date" value="{{ today }}" max="{{ today }}" required>
+      </div>
+      <div class="field checkbox-row">
+        <input type="checkbox" id="is_period_day" name="is_period_day">
+        <label for="is_period_day" style="margin:0;">This is a period day</label>
+      </div>
+      <div class="field">
+        <label>Flow</label>
+        <select name="flow">
+          <option value="">— not applicable —</option>
+          {% for f in flow_options %}
+          <option value="{{ f }}">{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Mood</label>
+        <select name="mood">
+          <option value="">— select —</option>
+          {% for m in mood_options %}
+          <option value="{{ m }}">{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Symptoms</label>
+        <div class="chip-group">
+          {% for s in symptom_options %}
+          <label class="chip"><input type="checkbox" name="symptoms" value="{{ s }}"> {{ s }}</label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Anything else worth remembering..."></textarea>
+      </div>
+      <button class="btn" type="submit">Save entry</button>
+    </form>
+  </div>
+
+  <div>
+    <div class="card">
+      <h3>Predictions</h3>
+      {% if cycle_info.next_predicted %}
+        <p style="font-size:0.9rem;">Next period predicted around</p>
+        <p style="font-size:1.5rem; font-weight:700; color:var(--pink-dark);">{{ cycle_info.next_predicted.strftime('%B %d, %Y') }}</p>
+        <p style="font-size:0.82rem; color:var(--ink-light);">Average cycle length: {{ cycle_info.avg_length }} days, based on your logged periods.</p>
+      {% else %}
+        <p class="empty">Log at least two period starts to get a prediction.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>Most logged symptoms</h3>
+      {% if top_symptoms %}
+        <div class="chip-group">
+          {% for tag, count in top_symptoms %}
+          <span class="chip">{{ tag }} &middot; {{ count }}</span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty">No symptoms logged yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Entry log</div>
+<div class="card">
+  {% if logs %}
+    <table>
+      <tr><th>Date</th><th>Period</th><th>Flow</th><th>Mood</th><th>Symptoms</th><th>Notes</th></tr>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.log_date.strftime('%b %d, %Y') }}</td>
+        <td>{{ "Yes" if log.is_period_day else "—" }}</td>
+        <td>{{ log.flow or "—" }}</td>
+        <td>{{ log.mood or "—" }}</td>
+        <td>{{ log.symptoms.replace(',', ', ') if log.symptoms else "—" }}</td>
+        <td>{{ log.notes or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">No entries logged yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

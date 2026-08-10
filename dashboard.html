@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="color:var(--pink-dark);">Doctor Dashboard</h1>
+
+<div class="grid grid-3">
+  <div class="card stat"><div class="num">{{ total_patients }}</div><div class="label">Total patients</div></div>
+  <div class="card stat"><div class="num">{{ todays_appts|length }}</div><div class="label">Appointments today</div></div>
+  <div class="card stat"><div class="num">{{ pending|length }}</div><div class="label">Pending requests</div></div>
+</div>
+
+<div class="section-title">Today &middot; {{ today.strftime('%B %d, %Y') }}</div>
+<div class="card">
+  {% if todays_appts %}
+    <table>
+      <tr><th>Time</th><th>Patient</th><th>Reason</th><th>Status</th><th></th></tr>
+      {% for a in todays_appts %}
+      <tr>
+        <td>{{ a.time }}</td>
+        <td><a href="{{ url_for('admin_patient_detail', patient_id=a.patient.id) }}">{{ a.patient.full_name }}</a></td>
+        <td>{{ a.reason or "—" }}</td>
+        <td><span class="badge badge-{{ a.status.lower() }}">{{ a.status }}</span></td>
+        <td><a href="{{ url_for('admin_patient_detail', patient_id=a.patient.id) }}" class="btn btn-sm btn-outline">Open chart</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">Nothing scheduled today.</p>
+  {% endif %}
+</div>
+
+<div class="section-title">Pending appointment requests</div>
+<div class="card">
+  {% if pending %}
+    <table>
+      <tr><th>Date</th><th>Time</th><th>Patient</th><th>Reason</th><th>Action</th></tr>
+      {% for a in pending %}
+      <tr>
+        <td>{{ a.date.strftime('%b %d, %Y') }}</td>
+        <td>{{ a.time }}</td>
+        <td><a href="{{ url_for('admin_patient_detail', patient_id=a.patient.id) }}">{{ a.patient.full_name }}</a></td>
+        <td>{{ a.reason or "—" }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin_update_appointment', appt_id=a.id) }}" style="display:inline;">
+            <input type="hidden" name="status" value="Confirmed">
+            <button class="btn btn-sm" type="submit">Confirm</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">No pending requests.</p>
+  {% endif %}
+</div>
+
+<div class="section-title">Follow-ups flagged</div>
+<div class="card">
+  {% if follow_ups %}
+    <table>
+      <tr><th>Patient</th><th>Original visit</th><th>Follow-up target</th></tr>
+      {% for a in follow_ups %}
+      <tr>
+        <td><a href="{{ url_for('admin_patient_detail', patient_id=a.patient.id) }}">{{ a.patient.full_name }}</a></td>
+        <td>{{ a.date.strftime('%b %d, %Y') }}</td>
+        <td>{{ a.follow_up_date.strftime('%b %d, %Y') if a.follow_up_date else "Unscheduled" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">No follow-ups flagged.</p>
+  {% endif %}
+</div>
+{% endblock %}

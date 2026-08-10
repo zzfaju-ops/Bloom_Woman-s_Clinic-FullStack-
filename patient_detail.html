@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('admin_patients') }}" style="font-size:0.85rem;">&larr; Back to patients</a>
+<h1 style="color:var(--pink-dark); margin-top:8px;">{{ patient.full_name }}</h1>
+
+<div class="grid grid-3">
+  <div class="card stat"><div class="num">{{ patient.age() or "—" }}</div><div class="label">Age</div></div>
+  <div class="card stat"><div class="num">{{ patient.appointments|length }}</div><div class="label">Total visits</div></div>
+  <div class="card stat"><div class="num">{{ cycle_info.avg_length or "—" }}</div><div class="label">Avg cycle (days)</div></div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Clinical notes &amp; allergies</h3>
+    <form method="POST">
+      <input type="hidden" name="form_type" value="notes">
+      <div class="field">
+        <label>Allergies</label>
+        <input type="text" name="allergies" value="{{ patient.allergies or '' }}">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea name="notes" rows="4">{{ patient.notes or '' }}</textarea>
+      </div>
+      <button class="btn btn-sm" type="submit">Save</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Contact</h3>
+    <p><strong>Phone:</strong> {{ patient.phone or "—" }}</p>
+    <p><strong>Address:</strong> {{ patient.address or "—" }}</p>
+    <p><strong>Date of birth:</strong> {{ patient.date_of_birth.strftime('%b %d, %Y') if patient.date_of_birth else "—" }}</p>
+    {% if cycle_info.next_predicted %}
+    <p><strong>Predicted next period:</strong> {{ cycle_info.next_predicted.strftime('%b %d, %Y') }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section-title">Add medication</div>
+<div class="card">
+  <form method="POST">
+    <input type="hidden" name="form_type" value="medication">
+    <div class="grid grid-3">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="field">
+        <label>Dosage</label>
+        <input type="text" name="dosage" placeholder="e.g. 50mg">
+      </div>
+      <div class="field">
+        <label>Frequency</label>
+        <input type="text" name="frequency" placeholder="e.g. Once daily">
+      </div>
+    </div>
+    <div class="grid grid-3">
+      <div class="field">
+        <label>Start date</label>
+        <input type="date" name="start_date" value="{{ today }}">
+      </div>
+      <div class="field">
+        <label>End date</label>
+        <input type="date" name="end_date">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input type="text" name="med_notes">
+      </div>
+    </div>
+    <button class="btn btn-sm" type="submit">Add medication</button>
+  </form>
+</div>
+
+<div class="section-title">Medication history</div>
+<div class="card">
+  {% if patient.medications %}
+    <table>
+      <tr><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Start</th><th>End</th><th>Status</th><th></th></tr>
+      {% for m in patient.medications %}
+      <tr>
+        <td>{{ m.name }}</td>
+        <td>{{ m.dosage }}</td>
+        <td>{{ m.frequency }}</td>
+        <td>{{ m.start_date.strftime('%b %d, %Y') if m.start_date else "—" }}</td>
+        <td>{{ m.end_date.strftime('%b %d, %Y') if m.end_date else "—" }}</td>
+        <td><span class="badge {{ 'badge-confirmed' if m.active else 'badge-cancelled' }}">{{ "Active" if m.active else "Ended" }}</span></td>
+        <td>
+          <form method="POST" action="{{ url_for('toggle_medication', med_id=m.id) }}">
+            <button class="btn btn-sm btn-outline" type="submit">{{ "Mark ended" if m.active else "Reactivate" }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">No medications on file.</p>
+  {% endif %}
+</div>
+
+<div class="section-title">Appointments</div>
+<div class="card">
+  {% if patient.appointments %}
+    {% for a in patient.appointments %}
+    <div class="calendar-day">
+      <div class="d-head">{{ a.date.strftime('%b %d, %Y') }} at {{ a.time }} — <span class="badge badge-{{ a.status.lower() }}">{{ a.status }}</span></div>
+      <p style="margin:4px 0; font-size:0.9rem;"><strong>Reason:</strong> {{ a.reason or "—" }}</p>
+      <form method="POST" action="{{ url_for('admin_update_appointment', appt_id=a.id) }}">
+        <div class="grid grid-3">
+          <div class="field">
+            <label>Status</label>
+            <select name="status">
+              {% for s in ['Requested', 'Confirmed', 'Completed', 'Cancelled'] %}
+              <option value="{{ s }}" {{ 'selected' if a.status == s }}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field checkbox-row" style="align-self:end;">
+            <input type="checkbox" id="fu{{ a.id }}" name="follow_up_needed" {{ 'checked' if a.follow_up_needed }}>
+            <label for="fu{{ a.id }}" style="margin:0;">Follow-up needed</label>
+          </div>
+          <div class="field">
+            <label>Follow-up date</label>
+            <input type="date" name="follow_up_date" value="{{ a.follow_up_date.isoformat() if a.follow_up_date else '' }}">
+          </div>
+        </div>
+        <div class="field">
+          <label>Doctor's notes</label>
+          <textarea name="doctor_notes" rows="2">{{ a.doctor_notes or '' }}</textarea>
+        </div>
+        <button class="btn btn-sm" type="submit">Save visit</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty">No appointments on file.</p>
+  {% endif %}
+</div>
+
+<div class="section-title">Cycle &amp; symptom log (read-only)</div>
+<div class="card">
+  {% if patient.cycle_logs %}
+    <table>
+      <tr><th>Date</th><th>Period</th><th>Flow</th><th>Mood</th><th>Symptoms</th><th>Notes</th></tr>
+      {% for log in patient.cycle_logs[:20] %}
+      <tr>
+        <td>{{ log.log_date.strftime('%b %d, %Y') }}</td>
+        <td>{{ "Yes" if log.is_period_day else "—" }}</td>
+        <td>{{ log.flow or "—" }}</td>
+        <td>{{ log.mood or "—" }}</td>
+        <td>{{ log.symptoms.replace(',', ', ') if log.symptoms else "—" }}</td>
+        <td>{{ log.notes or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">Patient hasn't logged any cycle entries yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

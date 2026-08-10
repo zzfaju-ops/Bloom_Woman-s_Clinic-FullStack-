@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero">
+  <h1>Care that listens.</h1>
+  <p>Book appointments, track your cycle and symptoms, and keep your full health history in one calm, private place.</p>
+  <div class="hero-actions">
+    <a href="{{ url_for('register') }}" class="btn">Create a patient account</a>
+    <a href="{{ url_for('login') }}" class="btn btn-outline">Log in</a>
+  </div>
+</div>
+
+<div class="grid grid-3">
+  <div class="card">
+    <h3>Appointments</h3>
+    <p style="color:var(--ink-light); font-size:0.92rem;">Request a visit, see your upcoming schedule, and cancel or reschedule anytime.</p>
+  </div>
+  <div class="card">
+    <h3>Your history</h3>
+    <p style="color:var(--ink-light); font-size:0.92rem;">Medication history, visit notes, and follow-up plans, always visible to you.</p>
+  </div>
+  <div class="card">
+    <h3>Cycle &amp; symptom tracker</h3>
+    <p style="color:var(--ink-light); font-size:0.92rem;">Log your period, mood, and symptoms each day and see gentle predictions for what's next.</p>
+  </div>
+</div>
+{% endblock %}

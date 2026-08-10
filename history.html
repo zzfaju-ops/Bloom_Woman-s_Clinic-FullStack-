@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="color:var(--pink-dark);">My History</h1>
+
+<div class="card">
+  <h3>Profile</h3>
+  <div class="grid grid-3">
+    <div><strong>Name</strong><p>{{ patient.full_name }}</p></div>
+    <div><strong>Age</strong><p>{{ patient.age() or "—" }}</p></div>
+    <div><strong>Phone</strong><p>{{ patient.phone or "—" }}</p></div>
+  </div>
+  {% if patient.allergies %}
+  <p><strong>Allergies:</strong> {{ patient.allergies }}</p>
+  {% endif %}
+</div>
+
+<div class="section-title">Medication history</div>
+<div class="card">
+  {% if patient.medications %}
+    <table>
+      <tr><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Start</th><th>End</th><th>Status</th></tr>
+      {% for m in patient.medications %}
+      <tr>
+        <td>{{ m.name }}</td>
+        <td>{{ m.dosage }}</td>
+        <td>{{ m.frequency }}</td>
+        <td>{{ m.start_date.strftime('%b %d, %Y') if m.start_date else "—" }}</td>
+        <td>{{ m.end_date.strftime('%b %d, %Y') if m.end_date else "—" }}</td>
+        <td><span class="badge {{ 'badge-confirmed' if m.active else 'badge-cancelled' }}">{{ "Active" if m.active else "Ended" }}</span></td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">No medications on file yet.</p>
+  {% endif %}
+</div>
+
+<div class="section-title">Appointment &amp; visit history</div>
+<div class="card">
+  {% if patient.appointments %}
+    <table>
+      <tr><th>Date</th><th>Time</th><th>Reason</th><th>Status</th><th>Doctor's notes</th><th>Follow-up</th></tr>
+      {% for a in patient.appointments %}
+      <tr>
+        <td>{{ a.date.strftime('%b %d, %Y') }}</td>
+        <td>{{ a.time }}</td>
+        <td>{{ a.reason or "—" }}</td>
+        <td><span class="badge badge-{{ a.status.lower() }}">{{ a.status }}</span></td>
+        <td>{{ a.doctor_notes or "—" }}</td>
+        <td>{% if a.follow_up_needed %}{{ a.follow_up_date.strftime('%b %d, %Y') if a.follow_up_date else "Recommended" }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p class="empty">No visit history yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

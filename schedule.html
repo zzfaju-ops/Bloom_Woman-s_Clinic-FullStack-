@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="color:var(--pink-dark);">Schedule — next 14 days</h1>
+
+<div class="grid grid-2">
+  {% for d, appts in appts_by_day.items() %}
+  <div class="calendar-day">
+    <div class="d-head">{{ d.strftime('%A, %b %d') }}</div>
+    {% if appts %}
+      {% for a in appts %}
+      <p style="margin:4px 0; font-size:0.88rem;">
+        {{ a.time }} — <a href="{{ url_for('admin_patient_detail', patient_id=a.patient.id) }}">{{ a.patient.full_name }}</a>
+        <span class="badge badge-{{ a.status.lower() }}">{{ a.status }}</span>
+      </p>
+      {% endfor %}
+    {% else %}
+      <p class="empty" style="padding:4px 0;">No appointments</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
